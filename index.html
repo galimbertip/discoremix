@@ -1,0 +1,654 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Discoremix — porta ogni canzone in pista</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    box-sizing: border-box;
+    --bg:#f7eefc;
+    --panel:#ffffff;
+    --panel-2:#f1e4fb;
+    --text:#20132f;
+    --text-dim:#5c4a76;
+    --line: rgba(32,19,47,0.14);
+    --gold:#c9860a;
+    --pink:#c81460;
+    --glow: rgba(200,20,96,0.28);
+    padding-top: env(safe-area-inset-top, 0px);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --bg:#1a0f2b;
+      --panel:#251646;
+      --panel-2:#301c59;
+      --text:#f6eefc;
+      --text-dim:#b8a3d6;
+      --line: rgba(246,238,252,0.14);
+      --gold:#f4b73f;
+      --pink:#ff3f7f;
+      --glow: rgba(255,63,127,0.4);
+    }
+  }
+  :root[data-theme="dark"]{
+    --bg:#1a0f2b;
+    --panel:#251646;
+    --panel-2:#301c59;
+    --text:#f6eefc;
+    --text-dim:#b8a3d6;
+    --line: rgba(246,238,252,0.14);
+    --gold:#f4b73f;
+    --pink:#ff3f7f;
+    --glow: rgba(255,63,127,0.4);
+  }
+  *{ box-sizing: inherit; }
+  html,body{ height:100%; }
+  html{ scroll-padding-top: env(safe-area-inset-top, 0px); }
+  body{
+    margin:0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Space Grotesk', 'Helvetica Neue', Arial, sans-serif;
+    font-variant-numeric: tabular-nums;
+    -webkit-font-smoothing: antialiased;
+    display:flex;
+    justify-content:center;
+    padding: 28px 16px 48px;
+  }
+  .rack{
+    width: 100%;
+    max-width: 620px;
+  }
+  header{
+    text-align:left;
+    margin-bottom: 22px;
+  }
+  .eyebrow-ball{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    width:40px; height:40px;
+    font-size: 22px;
+    border-radius:50%;
+    background: radial-gradient(circle at 32% 28%, #fff, var(--panel-2) 55%, var(--panel) 80%);
+    box-shadow: 0 0 0 1px var(--line);
+    transition: box-shadow .15s ease, transform .15s ease;
+  }
+  .eyebrow-ball.pulse{
+    animation: ballpulse .32s ease-out;
+  }
+  @keyframes ballpulse{
+    0%{ box-shadow: 0 0 0 1px var(--line), 0 0 0 0 var(--glow); transform: scale(1); }
+    30%{ box-shadow: 0 0 0 1px var(--line), 0 0 22px 6px var(--glow); transform: scale(1.08); }
+    100%{ box-shadow: 0 0 0 1px var(--line), 0 0 0 0 transparent; transform: scale(1); }
+  }
+  h1{
+    font-size: clamp(28px, 7vw, 38px);
+    line-height: 1.05;
+    font-weight: 700;
+    margin: 14px 0 6px;
+  }
+  header p{
+    color: var(--text-dim);
+    font-size: 15px;
+    line-height: 1.5;
+    max-width: 46ch;
+    margin: 0;
+  }
+  .panel{
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 18px;
+    padding: 4px 0;
+    overflow: hidden;
+  }
+  .strip{
+    padding: 18px 20px;
+    border-bottom: 1px solid var(--line);
+  }
+  .strip:last-child{ border-bottom: none; }
+  .strip-head{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap: 12px;
+    margin-bottom: 10px;
+  }
+  .strip-head h2{
+    font-size: 15px;
+    font-weight: 600;
+    margin: 0;
+  }
+  .strip-head .sub{
+    font-size: 12px;
+    color: var(--text-dim);
+    margin-top: 2px;
+  }
+  .toggle{
+    position: relative;
+    width: 42px; height: 24px;
+    border-radius: 999px;
+    background: var(--panel-2);
+    border: 1px solid var(--line);
+    cursor: pointer;
+    flex-shrink: 0;
+  }
+  .toggle::after{
+    content:'';
+    position:absolute;
+    top: 2px; left: 2px;
+    width: 18px; height: 18px;
+    border-radius: 50%;
+    background: var(--text-dim);
+    transition: transform .15s ease, background .15s ease;
+  }
+  .toggle.on{ background: var(--pink); border-color: var(--pink); }
+  .toggle.on::after{ transform: translateX(18px); background: #fff; }
+  input[type="range"]{
+    -webkit-appearance:none;
+    appearance:none;
+    width:100%;
+    height: 8px;
+    border-radius: 999px;
+    background: var(--panel-2);
+    outline: none;
+  }
+  input[type="range"]::-webkit-slider-thumb{
+    -webkit-appearance:none;
+    width: 18px; height: 18px;
+    border-radius: 5px;
+    background: var(--gold);
+    border: 2px solid var(--panel);
+    box-shadow: 0 0 0 1px var(--line);
+    cursor:pointer;
+  }
+  input[type="range"]::-moz-range-thumb{
+    width: 16px; height: 18px;
+    border-radius: 5px;
+    background: var(--gold);
+    border: 2px solid var(--panel);
+    cursor:pointer;
+  }
+  .file-row{
+    display:flex;
+    align-items:center;
+    gap:12px;
+    flex-wrap: wrap;
+  }
+  .btn{
+    font-family: inherit;
+    font-size: 14px;
+    font-weight: 600;
+    border-radius: 10px;
+    border: 1px solid var(--line);
+    background: var(--panel-2);
+    color: var(--text);
+    padding: 10px 16px;
+    cursor: pointer;
+  }
+  .btn:disabled{ opacity:.45; cursor:not-allowed; }
+  .btn-primary{
+    background: var(--pink);
+    border-color: var(--pink);
+    color:#fff;
+  }
+  .btn-gold{
+    background: var(--gold);
+    border-color: var(--gold);
+    color:#20132f;
+  }
+  .track-name{
+    font-size: 13px;
+    color: var(--text-dim);
+    word-break: break-word;
+  }
+  .bpm-row{
+    display:flex;
+    align-items:center;
+    gap: 14px;
+    flex-wrap: wrap;
+  }
+  .bpm-display{
+    font-size: 34px;
+    font-weight: 700;
+    min-width: 80px;
+  }
+  .bpm-display span{
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text-dim);
+    margin-left: 4px;
+  }
+  input[type="number"]{
+    width: 74px;
+    font-family: inherit;
+    font-size: 16px;
+    padding: 8px 10px;
+    border-radius: 8px;
+    border: 1px solid var(--line);
+    background: var(--panel-2);
+    color: var(--text);
+  }
+  .transport{
+    display:flex;
+    gap: 12px;
+    align-items:center;
+    flex-wrap: wrap;
+  }
+  .status{
+    font-size: 13px;
+    color: var(--text-dim);
+    min-height: 18px;
+  }
+  .progress-track{
+    width:100%;
+    height: 6px;
+    border-radius: 999px;
+    background: var(--panel-2);
+    overflow: hidden;
+    margin-top: 10px;
+    display:none;
+  }
+  .progress-track.show{ display:block; }
+  .progress-fill{
+    height:100%;
+    width:0%;
+    background: linear-gradient(90deg, var(--gold), var(--pink));
+  }
+  footer{
+    margin-top: 18px;
+    font-size: 12.5px;
+    color: var(--text-dim);
+    line-height: 1.5;
+  }
+  a.hidden-input{ display:none; }
+</style>
+</head>
+<body>
+<div class="rack">
+  <header>
+    <div class="eyebrow-ball" id="ball">🪩</div>
+    <h1>Portala in pista</h1>
+    <p>Carica un brano, aggiungi cassa, hi-hat e un po' di sidechain sincronizzati al BPM, poi esporta il remix.</p>
+  </header>
+
+  <div class="panel">
+    <div class="strip">
+      <div class="strip-head">
+        <h2>1. Carica il brano</h2>
+      </div>
+      <div class="file-row">
+        <button class="btn" id="loadBtn">Importa file audio</button>
+        <input type="file" id="fileInput" accept="audio/*" class="hidden-input">
+        <span class="track-name" id="trackName">Nessun file caricato</span>
+      </div>
+    </div>
+
+    <div class="strip">
+      <div class="strip-head">
+        <h2>2. Imposta il tempo</h2>
+        <span class="sub">Fallo prima di premere play</span>
+      </div>
+      <div class="bpm-row">
+        <div class="bpm-display" id="bpmDisplay">120<span>bpm</span></div>
+        <input type="number" id="bpmInput" min="60" max="200" value="120">
+        <button class="btn" id="tapBtn">Tap tempo</button>
+      </div>
+    </div>
+
+    <div class="strip">
+      <div class="strip-head">
+        <div>
+          <h2>Traccia originale</h2>
+          <div class="sub">Voce, strumenti, tutto il brano</div>
+        </div>
+      </div>
+      <input type="range" id="origVol" min="0" max="100" value="85">
+    </div>
+
+    <div class="strip">
+      <div class="strip-head">
+        <div>
+          <h2>Cassa in quattro</h2>
+          <div class="sub">Il battito da discoteca, un colpo per ogni quarto</div>
+        </div>
+        <div class="toggle on" id="kickToggle"></div>
+      </div>
+      <input type="range" id="kickVol" min="0" max="100" value="80">
+    </div>
+
+    <div class="strip">
+      <div class="strip-head">
+        <div>
+          <h2>Hi-hat</h2>
+          <div class="sub">Contrattempo aperto tra un colpo di cassa e l'altro</div>
+        </div>
+        <div class="toggle on" id="hihatToggle"></div>
+      </div>
+      <input type="range" id="hihatVol" min="0" max="100" value="55">
+    </div>
+
+    <div class="strip">
+      <div class="strip-head">
+        <div>
+          <h2>Sidechain</h2>
+          <div class="sub">Abbassa il brano a ogni colpo di cassa, per far "respirare" il tunz tunz</div>
+        </div>
+      </div>
+      <input type="range" id="duckAmount" min="0" max="100" value="55">
+    </div>
+
+    <div class="strip">
+      <div class="strip-head">
+        <h2>3. Ascolta ed esporta</h2>
+      </div>
+      <div class="transport">
+        <button class="btn btn-primary" id="playBtn" disabled>Ascolta anteprima</button>
+        <button class="btn btn-gold" id="exportBtn" disabled>Esporta il remix</button>
+      </div>
+      <div class="progress-track" id="progressTrack"><div class="progress-fill" id="progressFill"></div></div>
+      <div class="status" id="status"></div>
+    </div>
+  </div>
+
+  <footer id="footerNote">
+    Il file esportato è audio, in formato .webm (o .mp4 sui browser che non supportano webm): si apre in qualunque player e si può convertire in mp3 se serve.
+  </footer>
+</div>
+
+<script>
+(function(){
+  const el = id => document.getElementById(id);
+  const loadBtn = el('loadBtn'), fileInput = el('fileInput'), trackName = el('trackName');
+  const bpmInput = el('bpmInput'), bpmDisplay = el('bpmDisplay'), tapBtn = el('tapBtn');
+  const origVol = el('origVol'), kickVol = el('kickVol'), hihatVol = el('hihatVol'), duckAmount = el('duckAmount');
+  const kickToggle = el('kickToggle'), hihatToggle = el('hihatToggle');
+  const playBtn = el('playBtn'), exportBtn = el('exportBtn');
+  const statusEl = el('status'), progressTrack = el('progressTrack'), progressFill = el('progressFill');
+  const ball = el('ball');
+
+  let audioCtx = null, masterGain = null, sidechainGain = null, origVolGain = null, noiseBuffer = null;
+  let originalBuffer = null, originalSource = null;
+  let isPlaying = false, isExporting = false;
+  let schedulerId = null, nextNoteTime = 0, current8th = 0;
+  let bpm = 120, secondsPerBeat = 0.5, secondsPer8th = 0.25;
+  const lookahead = 25, scheduleAheadTime = 0.12;
+  let kickEnabled = true, hihatEnabled = true;
+  let kickVolVal = 0.8, hihatVolVal = 0.55, duckAmountVal = 0.55;
+  let pulseQueue = [];
+  let recorder = null, chunks = [], streamDest = null, exportStartAt = 0, exportExt = 'webm';
+  let tapTimes = [];
+
+  function setStatus(msg){ statusEl.textContent = msg || ''; }
+
+  function recomputeTiming(){
+    secondsPerBeat = 60 / bpm;
+    secondsPer8th = secondsPerBeat / 2;
+  }
+
+  function ensureAudioCtx(){
+    if (audioCtx) return;
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    masterGain = audioCtx.createGain();
+    masterGain.gain.value = 0.9;
+    masterGain.connect(audioCtx.destination);
+
+    sidechainGain = audioCtx.createGain();
+    origVolGain = audioCtx.createGain();
+    origVolGain.gain.value = origVol.value / 100;
+    sidechainGain.connect(origVolGain);
+    origVolGain.connect(masterGain);
+
+    const noiseLen = Math.floor(audioCtx.sampleRate * 0.12);
+    noiseBuffer = audioCtx.createBuffer(1, noiseLen, audioCtx.sampleRate);
+    const data = noiseBuffer.getChannelData(0);
+    for (let i = 0; i < noiseLen; i++) data[i] = (Math.random() * 2 - 1) * (1 - i / noiseLen);
+  }
+
+  loadBtn.addEventListener('click', () => fileInput.click());
+
+  fileInput.addEventListener('change', async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    setStatus('Carico e decodifico il file…');
+    ensureAudioCtx();
+    try{
+      const arrayBuffer = await file.arrayBuffer();
+      originalBuffer = await audioCtx.decodeAudioData(arrayBuffer);
+      trackName.textContent = file.name + ' — ' + formatTime(originalBuffer.duration);
+      playBtn.disabled = false;
+      exportBtn.disabled = false;
+      setStatus('Pronto. Imposta il BPM e premi anteprima.');
+    }catch(err){
+      setStatus('Non sono riuscito a leggere questo file audio.');
+    }
+  });
+
+  function formatTime(s){
+    const m = Math.floor(s/60), r = Math.floor(s%60);
+    return m + ':' + String(r).padStart(2,'0');
+  }
+
+  bpmInput.addEventListener('input', () => {
+    let v = parseInt(bpmInput.value, 10);
+    if (isNaN(v)) return;
+    v = Math.max(60, Math.min(200, v));
+    bpm = v;
+    bpmDisplay.firstChild.textContent = bpm;
+    recomputeTiming();
+  });
+
+  tapBtn.addEventListener('click', () => {
+    const now = performance.now();
+    if (tapTimes.length && now - tapTimes[tapTimes.length-1] > 2000) tapTimes = [];
+    tapTimes.push(now);
+    if (tapTimes.length > 8) tapTimes.shift();
+    if (tapTimes.length >= 2){
+      const intervals = [];
+      for (let i=1;i<tapTimes.length;i++) intervals.push(tapTimes[i]-tapTimes[i-1]);
+      const avg = intervals.reduce((a,b)=>a+b,0)/intervals.length;
+      const newBpm = Math.round(60000/avg);
+      if (newBpm >= 60 && newBpm <= 200){
+        bpm = newBpm;
+        bpmInput.value = bpm;
+        bpmDisplay.firstChild.textContent = bpm;
+        recomputeTiming();
+      }
+    }
+  });
+
+  origVol.addEventListener('input', () => { if (origVolGain) origVolGain.gain.value = origVol.value/100; });
+  kickVol.addEventListener('input', () => { kickVolVal = kickVol.value/100; });
+  hihatVol.addEventListener('input', () => { hihatVolVal = hihatVol.value/100; });
+  duckAmount.addEventListener('input', () => { duckAmountVal = duckAmount.value/100; });
+
+  kickToggle.addEventListener('click', () => {
+    kickEnabled = !kickEnabled;
+    kickToggle.classList.toggle('on', kickEnabled);
+  });
+  hihatToggle.addEventListener('click', () => {
+    hihatEnabled = !hihatEnabled;
+    hihatToggle.classList.toggle('on', hihatEnabled);
+  });
+
+  function playKick(time){
+    const osc = audioCtx.createOscillator();
+    const g = audioCtx.createGain();
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(150, time);
+    osc.frequency.exponentialRampToValueAtTime(45, time + 0.12);
+    g.gain.setValueAtTime(0.0001, time);
+    g.gain.exponentialRampToValueAtTime(Math.max(kickVolVal,0.001), time + 0.005);
+    g.gain.exponentialRampToValueAtTime(0.001, time + 0.28);
+    osc.connect(g).connect(masterGain);
+    osc.start(time); osc.stop(time + 0.3);
+    duckSidechain(time);
+    pulseQueue.push(time);
+  }
+
+  function playHiHat(time){
+    const src = audioCtx.createBufferSource();
+    src.buffer = noiseBuffer;
+    const hp = audioCtx.createBiquadFilter();
+    hp.type = 'highpass';
+    hp.frequency.value = 7000;
+    const g = audioCtx.createGain();
+    g.gain.setValueAtTime(Math.max(hihatVolVal,0.0001), time);
+    g.gain.exponentialRampToValueAtTime(0.001, time + 0.15);
+    src.connect(hp).connect(g).connect(masterGain);
+    src.start(time); src.stop(time + 0.16);
+  }
+
+  function duckSidechain(time){
+    if (!sidechainGain) return;
+    const release = Math.min(secondsPerBeat * 0.85, 0.5);
+    sidechainGain.gain.cancelScheduledValues(time);
+    sidechainGain.gain.setValueAtTime(1, time);
+    sidechainGain.gain.linearRampToValueAtTime(1 - duckAmountVal, time + 0.03);
+    sidechainGain.gain.linearRampToValueAtTime(1, time + release);
+  }
+
+  function scheduleNote(beatIndex, time){
+    const isDownbeat = beatIndex % 2 === 0;
+    if (kickEnabled && isDownbeat) playKick(time);
+    if (hihatEnabled && !isDownbeat) playHiHat(time);
+  }
+
+  function scheduler(){
+    while (nextNoteTime < audioCtx.currentTime + scheduleAheadTime){
+      scheduleNote(current8th, nextNoteTime);
+      nextNoteTime += secondsPer8th;
+      current8th = (current8th + 1) % 8;
+    }
+  }
+
+  function pulseLoop(){
+    if (!isPlaying) return;
+    const now = audioCtx.currentTime;
+    while (pulseQueue.length && pulseQueue[0] <= now){
+      pulseQueue.shift();
+      ball.classList.remove('pulse');
+      void ball.offsetWidth;
+      ball.classList.add('pulse');
+    }
+    if (isExporting) updateExportProgress();
+    requestAnimationFrame(pulseLoop);
+  }
+
+  function updateExportProgress(){
+    if (!originalBuffer) return;
+    const elapsed = audioCtx.currentTime - exportStartAt;
+    const pct = Math.max(0, Math.min(100, (elapsed / originalBuffer.duration) * 100));
+    progressFill.style.width = pct + '%';
+  }
+
+  function startPlayback(recording){
+    if (!originalBuffer || isPlaying) return;
+    ensureAudioCtx();
+    originalSource = audioCtx.createBufferSource();
+    originalSource.buffer = originalBuffer;
+    originalSource.connect(sidechainGain);
+    sidechainGain.gain.cancelScheduledValues(audioCtx.currentTime);
+    sidechainGain.gain.setValueAtTime(1, audioCtx.currentTime);
+
+    const startAt = audioCtx.currentTime + 0.15;
+    originalSource.onended = () => {
+      const wasExporting = isExporting;
+      stopPlayback();
+      if (wasExporting) finishExport();
+    };
+    originalSource.start(startAt);
+    nextNoteTime = startAt;
+    current8th = 0;
+    schedulerId = setInterval(scheduler, lookahead);
+    isPlaying = true;
+    playBtn.textContent = 'Interrompi';
+    requestAnimationFrame(pulseLoop);
+    if (recording){
+      exportStartAt = startAt;
+      progressTrack.classList.add('show');
+    }
+  }
+
+  function stopPlayback(){
+    if (schedulerId){ clearInterval(schedulerId); schedulerId = null; }
+    if (originalSource){ try{ originalSource.onended = null; originalSource.stop(); }catch(e){} originalSource = null; }
+    isPlaying = false;
+    playBtn.textContent = 'Ascolta anteprima';
+  }
+
+  playBtn.addEventListener('click', () => {
+    if (isExporting) return;
+    if (isPlaying) stopPlayback();
+    else startPlayback(false);
+  });
+
+  async function handleExportClick(){
+    if (isPlaying || isExporting || !originalBuffer) return;
+    if (typeof MediaRecorder === 'undefined'){
+      setStatus('Questo browser non supporta la registrazione audio necessaria per esportare.');
+      return;
+    }
+    ensureAudioCtx();
+    let downloads = null;
+    try{
+      downloads = (window.claude && window.claude.use) ? await window.claude.use('downloads') : null;
+    }catch(e){ downloads = null; }
+    if (!downloads){
+      setStatus('L\\'esportazione non è disponibile in questa vista.');
+      return;
+    }
+
+    const candidates = ['audio/webm;codecs=opus','audio/webm','audio/mp4'];
+    let mimeType = candidates.find(t => MediaRecorder.isTypeSupported(t)) || '';
+    if (!mimeType){
+      setStatus('Nessun formato audio registrabile è supportato da questo browser.');
+      return;
+    }
+    exportExt = mimeType.indexOf('mp4') !== -1 ? 'mp4' : 'webm';
+
+    streamDest = audioCtx.createMediaStreamDestination();
+    masterGain.connect(streamDest);
+    recorder = new MediaRecorder(streamDest.stream, { mimeType });
+    chunks = [];
+    recorder.ondataavailable = (e) => { if (e.data && e.data.size > 0) chunks.push(e.data); };
+    recorder.onstop = async () => {
+      try{ masterGain.disconnect(streamDest); }catch(e){}
+      const blob = new Blob(chunks, { type: mimeType.split(';')[0] });
+      try{
+        await downloads.save({ filename: 'remix-disco.' + exportExt, data: blob });
+        setStatus('Remix esportato.');
+      }catch(err){
+        setStatus('Esportazione annullata.');
+      }
+      isExporting = false;
+      exportBtn.disabled = false;
+      playBtn.disabled = false;
+      progressTrack.classList.remove('show');
+      progressFill.style.width = '0%';
+    };
+
+    isExporting = true;
+    exportBtn.disabled = true;
+    playBtn.disabled = true;
+    setStatus('Esportazione in corso — ascolterai il brano mentre viene registrato…');
+    recorder.start();
+    startPlayback(true);
+  }
+
+  function finishExport(){
+    if (recorder && recorder.state !== 'inactive') recorder.stop();
+  }
+
+  exportBtn.addEventListener('click', handleExportClick);
+
+  recomputeTiming();
+})();
+</script>
+</body>
+</html>
