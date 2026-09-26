@@ -2,6 +2,12 @@
 <!--
   Discoremix — cronologia versioni (schema V.major.minor.patch)
 
+  v1.0.2 — 26 settembre 2026
+    - Corretto un errore di sintassi JavaScript (una stringa scritta male
+      con un doppio backslash) che mandava in crash l'intero script:
+      tutti i pulsanti smettevano di rispondere e il nome del file
+      restava bloccato su "Nessun file caricato".
+
   v1.0.1 — 26 settembre 2026
     - Corretto il pulsante "Importa file audio": su alcuni browser mobile
       restava "finto" e non sbloccava anteprima/esportazione. Ora usa una
@@ -341,11 +347,13 @@
     <h1>Portala in pista</h1>
     <p>Carica un brano, aggiungi cassa, hi-hat e un po' di sidechain sincronizzati al BPM, poi esporta il remix.</p>
     <div class="version-row">
-      <button class="version-badge" id="versionBadge" type="button" aria-expanded="false">v1.0.1 · cosa è cambiato</button>
+      <button class="version-badge" id="versionBadge" type="button" aria-expanded="false">v1.0.2 · cosa è cambiato</button>
     </div>
     <div class="changelog" id="changelogPanel" hidden>
       <h3>Cronologia versioni</h3>
       <dl>
+        <dt>v1.0.2 — 26 settembre 2026</dt>
+        <dd>Corretto un errore di sintassi che mandava in crash l'intero script: tutti i pulsanti smettevano di rispondere e il nome del file restava bloccato su "Nessun file caricato".</dd>
         <dt>v1.0.1 — 26 settembre 2026</dt>
         <dd>Corretto il pulsante di importazione file: su alcuni browser mobile restava "finto" e non sbloccava anteprima/esportazione. Ora mostra subito il nome del file scelto e segnala eventuali errori di lettura invece di restare bloccato in silenzio.</dd>
         <dt>v1.0.0 — 25 settembre 2026</dt>
@@ -440,7 +448,7 @@
 
 <script>
 (function(){
-  const APP_VERSION = '1.0.1';
+  const APP_VERSION = '1.0.2';
   const el = id => document.getElementById(id);
   const versionBadge = el('versionBadge'), changelogPanel = el('changelogPanel');
   versionBadge.addEventListener('click', () => {
@@ -688,7 +696,7 @@
       downloads = (window.claude && window.claude.use) ? await window.claude.use('downloads') : null;
     }catch(e){ downloads = null; }
     if (!downloads){
-      setStatus('L\\'esportazione non è disponibile in questa vista.');
+      setStatus("L'esportazione non è disponibile in questa vista.");
       return;
     }
 
