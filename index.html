@@ -1,4 +1,19 @@
 <!DOCTYPE html>
+<!--
+  Discoremix — cronologia versioni (schema V.major.minor.patch)
+
+  v1.0.1 — 26 settembre 2026
+    - Corretto il pulsante "Importa file audio": su alcuni browser mobile
+      restava "finto" e non sbloccava anteprima/esportazione. Ora usa una
+      <label> collegata nativamente all'input file (niente click via JS),
+      mostra subito il nome del file scelto e segnala eventuali errori di
+      lettura/decodifica invece di restare bloccato in silenzio.
+
+  v1.0.0 — 25 settembre 2026
+    - Prima versione: import del brano, cassa in quattro, hi-hat,
+      sidechain, BPM manuale con tap tempo, anteprima in tempo reale ed
+      esportazione audio (webm, con fallback mp4).
+-->
 <html lang="it">
 <head>
 <meta charset="UTF-8">
@@ -276,6 +291,47 @@
     border: 0;
   }
   label.btn{ display:inline-block; }
+  .version-row{
+    margin-top: 12px;
+  }
+  .version-badge{
+    font-family: inherit;
+    font-size: 12.5px;
+    font-weight: 600;
+    color: var(--text-dim);
+    background: var(--panel-2);
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    padding: 5px 12px;
+    cursor: pointer;
+  }
+  .version-badge:hover{ color: var(--text); }
+  .changelog{
+    margin-top: 10px;
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    padding: 14px 18px;
+  }
+  .changelog[hidden]{ display:none; }
+  .changelog h3{
+    font-size: 13px;
+    font-weight: 600;
+    margin: 0 0 8px;
+  }
+  .changelog dt{
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text);
+    margin-top: 10px;
+  }
+  .changelog dt:first-of-type{ margin-top: 0; }
+  .changelog dd{
+    margin: 3px 0 0;
+    font-size: 12.5px;
+    color: var(--text-dim);
+    line-height: 1.5;
+  }
 </style>
 </head>
 <body>
@@ -284,6 +340,18 @@
     <div class="eyebrow-ball" id="ball">🪩</div>
     <h1>Portala in pista</h1>
     <p>Carica un brano, aggiungi cassa, hi-hat e un po' di sidechain sincronizzati al BPM, poi esporta il remix.</p>
+    <div class="version-row">
+      <button class="version-badge" id="versionBadge" type="button" aria-expanded="false">v1.0.1 · cosa è cambiato</button>
+    </div>
+    <div class="changelog" id="changelogPanel" hidden>
+      <h3>Cronologia versioni</h3>
+      <dl>
+        <dt>v1.0.1 — 26 settembre 2026</dt>
+        <dd>Corretto il pulsante di importazione file: su alcuni browser mobile restava "finto" e non sbloccava anteprima/esportazione. Ora mostra subito il nome del file scelto e segnala eventuali errori di lettura invece di restare bloccato in silenzio.</dd>
+        <dt>v1.0.0 — 25 settembre 2026</dt>
+        <dd>Prima versione: import del brano, cassa in quattro, hi-hat, sidechain, BPM manuale con tap tempo, anteprima e esportazione audio (webm/mp4).</dd>
+      </dl>
+    </div>
   </header>
 
   <div class="panel">
@@ -372,7 +440,15 @@
 
 <script>
 (function(){
+  const APP_VERSION = '1.0.1';
   const el = id => document.getElementById(id);
+  const versionBadge = el('versionBadge'), changelogPanel = el('changelogPanel');
+  versionBadge.addEventListener('click', () => {
+    const isHidden = changelogPanel.hasAttribute('hidden');
+    if (isHidden) changelogPanel.removeAttribute('hidden');
+    else changelogPanel.setAttribute('hidden', '');
+    versionBadge.setAttribute('aria-expanded', String(isHidden));
+  });
   const fileInput = el('fileInput'), trackName = el('trackName');
   const bpmInput = el('bpmInput'), bpmDisplay = el('bpmDisplay'), tapBtn = el('tapBtn');
   const origVol = el('origVol'), kickVol = el('kickVol'), hihatVol = el('hihatVol'), duckAmount = el('duckAmount');
