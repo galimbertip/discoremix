@@ -266,7 +266,16 @@
     color: var(--text-dim);
     line-height: 1.5;
   }
-  a.hidden-input{ display:none; }
+  .hidden-input{
+    position: absolute;
+    width: 1px; height: 1px;
+    padding: 0; margin: -1px;
+    overflow: hidden;
+    clip: rect(0,0,0,0);
+    white-space: nowrap;
+    border: 0;
+  }
+  label.btn{ display:inline-block; }
 </style>
 </head>
 <body>
@@ -283,7 +292,7 @@
         <h2>1. Carica il brano</h2>
       </div>
       <div class="file-row">
-        <button class="btn" id="loadBtn">Importa file audio</button>
+        <label class="btn" for="fileInput">Importa file audio</label>
         <input type="file" id="fileInput" accept="audio/*" class="hidden-input">
         <span class="track-name" id="trackName">Nessun file caricato</span>
       </div>
@@ -364,7 +373,7 @@
 <script>
 (function(){
   const el = id => document.getElementById(id);
-  const loadBtn = el('loadBtn'), fileInput = el('fileInput'), trackName = el('trackName');
+  const fileInput = el('fileInput'), trackName = el('trackName');
   const bpmInput = el('bpmInput'), bpmDisplay = el('bpmDisplay'), tapBtn = el('tapBtn');
   const origVol = el('origVol'), kickVol = el('kickVol'), hihatVol = el('hihatVol'), duckAmount = el('duckAmount');
   const kickToggle = el('kickToggle'), hihatToggle = el('hihatToggle');
@@ -410,14 +419,15 @@
     for (let i = 0; i < noiseLen; i++) data[i] = (Math.random() * 2 - 1) * (1 - i / noiseLen);
   }
 
-  loadBtn.addEventListener('click', () => fileInput.click());
-
-  fileInput.addEventListener('change', async (e) => {
-    const file = e.target.files[0];
+  async function handleFileChosen(file){
     if (!file) return;
-    setStatus('Carico e decodifico il file…');
-    ensureAudioCtx();
+    trackName.textContent = file.name;
+    setStatus('Carico e decodifico "' + file.name + '"…');
+    playBtn.disabled = true;
+    exportBtn.disabled = true;
     try{
+      ensureAudioCtx();
+      if (audioCtx.state === 'suspended') { try{ await audioCtx.resume(); }catch(e){} }
       const arrayBuffer = await file.arrayBuffer();
       originalBuffer = await audioCtx.decodeAudioData(arrayBuffer);
       trackName.textContent = file.name + ' — ' + formatTime(originalBuffer.duration);
@@ -425,9 +435,11 @@
       exportBtn.disabled = false;
       setStatus('Pronto. Imposta il BPM e premi anteprima.');
     }catch(err){
-      setStatus('Non sono riuscito a leggere questo file audio.');
+      setStatus('Non sono riuscito a leggere questo file audio (' + (err && err.message ? err.message : 'errore sconosciuto') + ').');
     }
-  });
+  }
+
+  fileInput.addEventListener('change', (e) => handleFileChosen(e.target.files[0]));
 
   function formatTime(s){
     const m = Math.floor(s/60), r = Math.floor(s%60);
